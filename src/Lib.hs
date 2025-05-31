@@ -55,7 +55,7 @@ palo (Hierro n) hab = UnTiro {velocidad = fuerzaJugador hab * n , precision = pr
 
 palos :: [NombrePalos]
 
-palos = [Putter, Madera] ++ map Hierro[1..10]
+palos = [Putter, Madera] ++ map Hierro [1..10]
 
 
 
@@ -86,13 +86,12 @@ obstaculo  Hoyo (UnTiro velocidad precision altura)
   | otherwise = UnTiro velocidad precision altura
 
 pruebaPalo :: Jugador -> TipoObstaculo -> NombrePalos -> Bool
-pruebaPalo jugador Hoyo tipoPalos  = obstaculo Hoyo (golpe jugador tipoPalos) == tiroDetenido
-pruebaPalo jugador Tunel tipoPalos = obstaculo Tunel (golpe jugador tipoPalos) /= tiroDetenido
-pruebaPalo jugador (Laguna n) tipoPalos = obstaculo (Laguna n) (golpe jugador tipoPalos) /= tiroDetenido
+pruebaPalo jugador Hoyo tipoPalos  = (obstaculo Hoyo . golpe jugador) tipoPalos == tiroDetenido
+pruebaPalo jugador Tunel tipoPalos = (obstaculo Tunel . golpe jugador) tipoPalos /= tiroDetenido
+pruebaPalo jugador (Laguna n) tipoPalos = (obstaculo (Laguna n) . golpe jugador) tipoPalos /= tiroDetenido
 
 -- obstaculo Hoyo (golpe jugador tipoPalos)
--- obstaculo Hoyo . golpe jugador TipoPalos (?)
--- (golpe jugador . obstaculo Hoyo ) TipoPalos
+-- (obstaculo Hoyo . golpe jugador) TipoPalos
 
 -- 4
 -- a
@@ -101,23 +100,23 @@ palosUtiles :: Jugador -> TipoObstaculo -> [NombrePalos]
 palosUtiles jugador tipoObstaculo = filter (pruebaPalo jugador tipoObstaculo) palos
 
 obstaculoPasado :: Tiro -> TipoObstaculo -> Bool
-obstaculoPasado tiro Hoyo = obstaculo Hoyo tiro == tiroDetenido 
-obstaculoPasado tiro Tunel = obstaculo Tunel tiro /= tiroDetenido 
-obstaculoPasado tiro (Laguna n) = obstaculo (Laguna n) tiro /= tiroDetenido 
+obstaculoPasado tiro Hoyo = obstaculo Hoyo tiro == tiroDetenido
+obstaculoPasado tiro Tunel = obstaculo Tunel tiro /= tiroDetenido
+obstaculoPasado tiro (Laguna n) = obstaculo (Laguna n) tiro /= tiroDetenido
 
 -- b
 
 consecutivos :: Tiro -> [TipoObstaculo] -> Number
 -- consecutivos tiro obstaculos = length (takeWhile (foldl obstaculoPasado tiro) obstaculos)
 consecutivos tiro [] = 0
-consecutivos tiro (obstaculo1 : obstaculos) 
-  | obstaculoPasado tiro obstaculo1
-      = 1 + consecutivos (obstaculo obstaculo1 tiro) obstaculos
+consecutivos tiro (obstaculo1 : obstaculos)
+  | obstaculoPasado tiro obstaculo1 = 1 + consecutivos (obstaculo obstaculo1 tiro) obstaculos
   | otherwise = 0
 
---foldl obstaculoPasado tiro obstaculos
+-- c
 
-{-Saber, a partir de un conjunto de obstáculos y un tiro, cuántos obstáculos consecutivos se pueden superar.
-Por ejemplo, para un tiro de velocidad = 10, precisión = 95 y altura = 0, y una lista con dos túneles con rampita seguidos de un hoyo, el resultado sería 2 ya que la velocidad al salir del segundo túnel es de 40, por ende no supera el hoyo.
-BONUS: resolver este problema sin recursividad, teniendo en cuenta que existe una función takeWhile :: (a -> Bool) -> [a] -> [a] que podría ser de utilidad.-}
+--Definir paloMasUtil que recibe una persona y una lista de obstáculos y determina cuál es el palo que le permite superar más obstáculos con un solo tiro.
+
+paloMasUtil :: Jugador -> [TipoObstaculo] -> NombrePalos
+paloMasUtil jugador obstaculos = maximoSegun (flip consecutivos obstaculos . golpe jugador) palos
 
